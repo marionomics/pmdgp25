@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero Interactivo - Plan de Desarrollo Municipal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral & Muted Teal -->
+    <!-- Application Structure Plan: La aplicación se estructura como un tablero de control interactivo. La navegación principal consiste en cuatro botones prominentes para cada uno de los "Latidos" (ejes temáticos). Al seleccionar un "Latido", el área de contenido se actualiza dinámicamente para mostrar las "Dimensiones" y las preguntas de la encuesta correspondientes a ese eje. Esta estructura fue elegida por su claridad e intuición, ya que refleja directamente la organización lógica del documento fuente, permitiendo a los usuarios explorar los temas de forma aislada y enfocada. La interacción principal es el filtrado de contenido, complementado con una gráfica de radar dinámica que ofrece un resumen visual de las dimensiones del "Latido" seleccionado, utilizando datos de ejemplo para simular un informe de resultados y hacer la estructura más tangible. -->
+    <!-- Visualization & Content Choices: Se utilizan botones para la navegación principal (Latidos) para una interacción clara. El contenido de cada "Latido" se presenta en tarjetas de "Dimensión" que enumeran las preguntas específicas, manteniendo el contexto. La visualización principal es una Gráfica de Radar por cada "Latido" (renderizada en Canvas con Chart.js), elegida por su capacidad para comparar múltiples dimensiones (5-6 por eje) de forma efectiva en un solo gráfico, mostrando fortalezas o debilidades potenciales. La interacción de clic en un "Latido" actualiza tanto el contenido textual como la gráfica, creando una experiencia de tablero de control cohesiva y exploratoria. Esto transforma un cuestionario estático en una herramienta de visualización de estructura. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfcf9;
+        }
+        .active-nav {
+            background-color: #0d9488 !important;
+            color: white !important;
+            box-shadow: 0 4px 14px 0 rgb(13 148 136 / 40%);
+        }
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+        .nav-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px 0 rgba(0,0,0,0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-teal-800">Encuesta de Percepción Ciudadana</h1>
+            <p class="mt-2 text-lg text-gray-600">Exploración Interactiva del Plan Municipal de Desarrollo</p>
+        </header>
+
+        <nav class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            <button id="nav-latido1" class="nav-item p-4 rounded-lg bg-white shadow-md text-center font-semibold text-teal-700 border-2 border-transparent hover:border-teal-600">
+                <span class="text-2xl block mb-1">❤️</span>
+                Combate a la Corrupción
+            </button>
+            <button id="nav-latido2" class="nav-item p-4 rounded-lg bg-white shadow-md text-center font-semibold text-teal-700 border-2 border-transparent hover:border-teal-600">
+                <span class="text-2xl block mb-1">🤝</span>
+                Inclusión Social
+            </button>
+            <button id="nav-latido3" class="nav-item p-4 rounded-lg bg-white shadow-md text-center font-semibold text-teal-700 border-2 border-transparent hover:border-teal-600">
+                <span class="text-2xl block mb-1">🔧</span>
+                Servicios Públicos
+            </button>
+            <button id="nav-latido4" class="nav-item p-4 rounded-lg bg-white shadow-md text-center font-semibold text-teal-700 border-2 border-transparent hover:border-teal-600">
+                <span class="text-2xl block mb-1">📈</span>
+                Desarrollo Económico
+            </button>
+        </nav>
+
+        <main class="bg-white p-6 rounded-xl shadow-lg">
+            <div id="main-content" class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div class="order-2 lg:order-1">
+                    <h2 id="content-title" class="text-2xl font-bold text-teal-800 mb-4"></h2>
+                    <p id="content-description" class="text-gray-600 mb-6"></p>
+                    <div id="content-dimensions" class="space-y-4 max-h-[450px] overflow-y-auto pr-4">
+                    </div>
+                </div>
+                <div class="order-1 lg:order-2">
+                     <div class="chart-container">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="text-center mt-10 text-gray-500 text-sm">
+            <p>H. Ayuntamiento de Gómez Palacio</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const surveyData = {
+            latido1: {
+                title: "Latido 1: Combate Frontal a la Corrupción",
+                description: "Este eje se enfoca en medir la percepción ciudadana sobre la honestidad, eficiencia y transparencia en el gobierno municipal. Evalúa desde el comportamiento de los funcionarios hasta la facilidad para realizar trámites.",
+                chartData: {
+                    labels: ["Capacitación Policial", "Trámites Simples", "Sanción a Corrupción", "Vigilancia Interna", "Transparencia"],
+                    data: [3.8, 2.5, 4.2, 3.1, 2.9],
+                },
+                dimensions: [
+                    { name: "Capacitación al personal de Tránsito y Policía", questions: ["Confío en que los agentes de tránsito y policía de la ciudad actúan con honestidad.", "El trato que he recibido por parte del personal de tránsito y policía ha sido respetuoso y profesional.", "Considero que los agentes de tránsito y policía conocen y aplican correctamente el reglamento."] },
+                    { name: "Simplificación de trámites administrativos", questions: ["Realizar un trámite en el ayuntamiento es un proceso rápido y sencillo.", "La información que se me ha proporcionado para realizar trámites municipales ha sido clara y suficiente.", "He tenido que dar vueltas innecesarias o me han solicitado requisitos extra al realizar un trámite en el ayuntamiento."] },
+                    { name: "Sanción a actos de corrupción", questions: ["La corrupción es un problema frecuente en el gobierno municipal.", "Creo que actualmente existen consecuencias reales para los funcionarios públicos que cometen actos de corrupción.", "Confío en que, si denuncio un acto de corrupción, las autoridades tomarán medidas efectivas."] },
+                    { name: "Vigilancia al personal del ayuntamiento", questions: ["Percibo que el personal del ayuntamiento trabaja de manera eficiente y comprometida.", "Considero que existe una supervisión adecuada sobre el trabajo de los empleados municipales."] },
+                    { name: "Transparencia y acceso a la información", questions: ["Es fácil encontrar y consultar información sobre las acciones y el gasto del gobierno municipal.", "El gobierno municipal comunica de forma clara y oportuna sus decisiones importantes."] }
+                ]
+            },
+            latido2: {
+                title: "Latido 2: Inclusión y Acercamiento Social",
+                description: "Este eje mide cómo se sienten los ciudadanos respecto a la equidad en la atención municipal, la seguridad en sus comunidades y la calidad de los espacios públicos que fomentan la convivencia.",
+                chartData: {
+                    labels: ["Atención a Colonias", "Programas Comunitarios", "Seguridad", "Entorno Urbano", "Infraestructura Inclusiva"],
+                    data: [3.2, 4.0, 2.8, 3.5, 2.5],
+                },
+                dimensions: [
+                    { name: "Atención a colonias y ejidos", questions: ["Siento que el gobierno municipal le da a mi colonia/ejido la misma atención que a otras zonas de la ciudad.", "La respuesta del ayuntamiento a los problemas que he reportado en mi comunidad ha sido rápida."] },
+                    { name: "Programas y campañas comunitarias", questions: ["El gobierno municipal trae suficientes programas (de salud, cultura, deporte) directamente a mi colonia/ejido.", "Me entero fácilmente de los eventos, programas y apoyos que ofrece el ayuntamiento."] },
+                    { name: "Seguridad y policía de proximidad", questions: ["Me siento seguro caminando por mi colonia.", "Veo patrullajes de la policía con frecuencia en mi zona.", "Los policías que patrullan mi comunidad se muestran cercanos y accesibles para los vecinos."] },
+                    { name: "Entorno urbano (parques, calles, iluminación)", questions: ["El estado general de las calles y banquetas en mi colonia es bueno.", "Los parques y espacios públicos cercanos a mi casa están limpios y bien cuidados.", "La iluminación en las calles de mi colonia es suficiente y funciona correctamente."] },
+                    { name: "Infraestructura inclusiva", questions: ["Es fácil para una persona en silla de ruedas, con andador o carriola moverse por las banquetas de la ciudad.", "Los edificios públicos y el transporte cuentan con los accesos necesarios (rampas, elevadores) para todos."] }
+                ]
+            },
+            latido3: {
+                title: "Latido 3: Mejora en los Servicios Públicos",
+                description: "Este eje se centra en la calidad y eficiencia de los servicios básicos que impactan directamente la vida diaria de los ciudadanos, como el agua potable, la recolección de basura y el alumbrado público.",
+                chartData: {
+                    labels: ["Agua Potable", "Recolección de Basura", "Drenaje", "Parques y Plazas", "Alumbrado"],
+                    data: [2.2, 4.5, 3.0, 3.8, 2.7],
+                },
+                dimensions: [
+                    { name: "Abasto de agua potable", questions: ["El suministro de agua potable en mi hogar es constante y sin interrupciones.", "La presión del agua que llega a mi casa es suficiente para mis necesidades diarias."] },
+                    { name: "Recolección de basura", questions: ["El camión de la basura pasa puntualmente y con la frecuencia necesaria por mi calle.", "Es común ver basura acumulada en las calles de mi colonia."] },
+                    { name: "Drenaje y alcantarillado", questions: ["Cuando llueve, las calles de mi colonia se encharcan o inundan con facilidad.", "He experimentado problemas de malos olores o brotes de aguas negras provenientes del drenaje en mi zona."] },
+                    { name: "Mantenimiento de parques y plazas", questions: ["El ayuntamiento le da mantenimiento constante a las áreas verdes y al mobiliario de los parques públicos.", "Los juegos infantiles en los parques cercanos a mi casa son seguros y están en buen estado."] },
+                    { name: "Alumbrado público", questions: ["En mi colonia hay muchas lámparas del alumbrado público que no funcionan.", "Cuando se reporta una lámpara fundida, el ayuntamiento la repara en poco tiempo."] }
+                ]
+            },
+            latido4: {
+                title: "Latido 4: Desarrollo Económico y Oportunidades",
+                description: "Este eje explora la percepción sobre el ambiente de negocios, la creación de empleos, el apoyo a emprendedores y la promoción de la ciudad para atraer inversiones y turismo.",
+                chartData: {
+                    labels: ["Atracción de Inversiones", "Generación de Empleos", "Apoyo a Emprendedores", "Apertura de Empresas", "Promoción Turística"],
+                    data: [3.5, 2.6, 4.1, 3.3, 3.9],
+                },
+                dimensions: [
+                    { name: "Atracción de inversiones", questions: ["Percibo que constantemente se están abriendo nuevas empresas y negocios en Gómez Palacio.", "Considero que la ciudad es atractiva para que nuevas empresas quieran instalarse aquí."] },
+                    { name: "Generación de empleos", questions: ["En Gómez Palacio es fácil encontrar oportunidades de trabajo bien pagado.", "Las personas que conozco que buscan empleo lo encuentran rápidamente."] },
+                    { name: "Apoyo a emprendedores y microempresas", questions: ["El gobierno municipal ofrece apoyos reales y útiles para quienes quieren iniciar o hacer crecer un negocio.", "Es fácil para un emprendedor obtener la información y la ayuda que necesita por parte del municipio."] },
+                    { name: "Facilidad para apertura de empresas", questions: ["Los trámites municipales para abrir un nuevo negocio son claros, rápidos y sencillos.", "He escuchado que es muy complicado y tardado abrir una empresa por los requisitos del ayuntamiento."] },
+                    { name: "Promoción turística", questions: ["El gobierno municipal hace un buen trabajo para dar a conocer los lugares de interés de la ciudad.", "Considero que se aprovecha bien el potencial turístico de Gómez Palacio."] }
+                ]
+            }
+        };
+
+        let currentChart = null;
+        const chartCanvas = document.getElementById('mainChart').getContext('2d');
+        const contentTitle = document.getElementById('content-title');
+        const contentDescription = document.getElementById('content-description');
+        const contentDimensions = document.getElementById('content-dimensions');
+        const navButtons = document.querySelectorAll('.nav-item');
+
+        function updateChart(latidoId) {
+            const chartConfig = surveyData[latidoId].chartData;
+            if (currentChart) {
+                currentChart.destroy();
+            }
+            currentChart = new Chart(chartCanvas, {
+                type: 'radar',
+                data: {
+                    labels: chartConfig.labels,
+                    datasets: [{
+                        label: 'Calificación Promedio (Ejemplo)',
+                        data: chartConfig.data,
+                        fill: true,
+                        backgroundColor: 'rgba(13, 148, 136, 0.2)',
+                        borderColor: 'rgb(13, 148, 136)',
+                        pointBackgroundColor: 'rgb(13, 148, 136)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(13, 148, 136)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            pointLabels: { 
+                                font: { size: 12 },
+                                color: '#4A5568'
+                             },
+                            ticks: {
+                                backdropColor: 'rgba(255, 255, 255, 0.75)',
+                                color: '#718096',
+                                stepSize: 1,
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 5
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateContent(latidoId) {
+            const latidoData = surveyData[latidoId];
+            contentTitle.textContent = latidoData.title;
+            contentDescription.textContent = latidoData.description;
+            
+            contentDimensions.innerHTML = '';
+            latidoData.dimensions.forEach(dim => {
+                const questionsList = dim.questions.map(q => `<li class="text-sm text-gray-600 ml-4 list-disc">${q}</li>`).join('');
+                const dimensionEl = document.createElement('div');
+                dimensionEl.className = 'p-4 border rounded-lg bg-gray-50/50';
+                dimensionEl.innerHTML = `
+                    <h3 class="font-semibold text-gray-700">${dim.name}</h3>
+                    <ul class="mt-2 space-y-1">${questionsList}</ul>
+                `;
+                contentDimensions.appendChild(dimensionEl);
+            });
+        }
+        
+        function setActiveNav(latidoId) {
+             navButtons.forEach(button => {
+                button.classList.remove('active-nav');
+                if (button.id === `nav-${latidoId}`) {
+                    button.classList.add('active-nav');
+                }
+            });
+        }
+
+        function displayLatido(latidoId) {
+            updateContent(latidoId);
+            updateChart(latidoId);
+            setActiveNav(latidoId);
+        }
+
+        document.getElementById('nav-latido1').addEventListener('click', () => displayLatido('latido1'));
+        document.getElementById('nav-latido2').addEventListener('click', () => displayLatido('latido2'));
+        document.getElementById('nav-latido3').addEventListener('click', () => displayLatido('latido3'));
+        document.getElementById('nav-latido4').addEventListener('click', () => displayLatido('latido4'));
+
+        window.addEventListener('load', () => {
+            displayLatido('latido1');
+        });
+
+    </script>
+</body>
+</html>
