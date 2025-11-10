@@ -9,27 +9,47 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Warm Neutral & Muted Teal -->
-    <!-- Application Structure Plan: La aplicación se estructura como un tablero de control interactivo. La navegación principal consiste en cuatro botones prominentes para cada uno de los "Latidos" (ejes temáticos). Al seleccionar un "Latido", el área de contenido se actualiza dinámicamente para mostrar las "Dimensiones" y las preguntas de la encuesta correspondientes a ese eje. Esta estructura fue elegida por su claridad e intuición, ya que refleja directamente la organización lógica del documento fuente, permitiendo a los usuarios explorar los temas de forma aislada y enfocada. La interacción principal es el filtrado de contenido, complementado con una gráfica de radar dinámica que ofrece un resumen visual de las dimensiones del "Latido" seleccionado, utilizando datos de ejemplo para simular un informe de resultados y hacer la estructura más tangible. -->
-    <!-- Visualization & Content Choices: Se utilizan botones para la navegación principal (Latidos) para una interacción clara. El contenido de cada "Latido" se presenta en tarjetas de "Dimensión" que enumeran las preguntas específicas, manteniendo el contexto. La visualización principal es una Gráfica de Radar por cada "Latido" (renderizada en Canvas con Chart.js), elegida por su capacidad para comparar múltiples dimensiones (5-6 por eje) de forma efectiva en un solo gráfico, mostrando fortalezas o debilidades potenciales. La interacción de clic en un "Latido" actualiza tanto el contenido textual como la gráfica, creando una experiencia de tablero de control cohesiva y exploratoria. Esto transforma un cuestionario estático en una herramienta de visualización de estructura. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #fdfcf9;
+            background-color: #fdfcf9; /* Mantengo este como fondo general, puedes cambiarlo si prefieres */
         }
+        /* Colores de la paleta oficial */
+        /* #474C55 - Gris oscuro cálido */
+        /* #727372 - Gris medio neutro */
+        /* #B2B6AF - Gris claro verdoso */
+        /* #130D0E - Negro casi absoluto */
+
         .active-nav {
-            background-color: #0d9488 !important;
-            color: white !important;
-            box-shadow: 0 4px 14px 0 rgb(13 148 136 / 40%);
+            background-color: #474C55 !important; /* Usamos gris oscuro de la paleta */
+            color: #B2B6AF !important; /* Usamos gris claro para el texto */
+            box-shadow: 0 4px 14px 0 rgba(71, 76, 85, 0.4); /* Sombra acorde al color */
         }
         .nav-item {
             transition: all 0.3s ease;
+            background-color: white; /* Botones inactivos en blanco */
+            color: #474C55; /* Texto de botones inactivos en gris oscuro */
+            border-2 border-transparent;
+            box-shadow: 0 2px 8px 0 rgba(0,0,0,0.05);
         }
         .nav-item:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 20px 0 rgba(0,0,0,0.1);
+            border-color: #727372; /* Borde gris medio al pasar el mouse */
         }
+        /* Ajuste de color para el título principal si lo deseas */
+        .text-main-title {
+            color: #130D0E; /* Negro para el título principal */
+        }
+        /* Ajuste de color para los subtítulos de contenido */
+        .text-content-title {
+            color: #474C55; /* Gris oscuro para títulos de contenido */
+        }
+        /* Ajuste de color para texto general */
+        .text-general {
+            color: #727372; /* Gris medio para texto general */
+        }
+
         .chart-container {
             position: relative;
             width: 100%;
@@ -46,29 +66,29 @@
         }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="text-general">
 
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         <header class="text-center mb-10">
-            <h1 class="text-3xl md:text-4xl font-bold text-teal-800">Encuesta de Percepción Ciudadana</h1>
-            <p class="mt-2 text-lg text-gray-600">Exploración Interactiva del Plan Municipal de Desarrollo</p>
+            <h1 class="text-3xl md:text-4xl font-bold text-main-title">Encuesta de Percepción Ciudadana</h1>
+            <p class="mt-2 text-lg text-general">Exploración Interactiva del Plan Municipal de Desarrollo</p>
         </header>
 
         <nav class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            <button id="nav-latido1" class="nav-item p-4 rounded-lg bg-white shadow-md text-center font-semibold text-teal-700 border-2 border-transparent hover:border-teal-600">
+            <button id="nav-latido1" class="nav-item p-4 rounded-lg shadow-md text-center font-semibold">
                 <span class="text-2xl block mb-1">❤️</span>
                 Combate a la Corrupción
             </button>
-            <button id="nav-latido2" class="nav-item p-4 rounded-lg bg-white shadow-md text-center font-semibold text-teal-700 border-2 border-transparent hover:border-teal-600">
+            <button id="nav-latido2" class="nav-item p-4 rounded-lg shadow-md text-center font-semibold">
                 <span class="text-2xl block mb-1">🤝</span>
                 Inclusión Social
             </button>
-            <button id="nav-latido3" class="nav-item p-4 rounded-lg bg-white shadow-md text-center font-semibold text-teal-700 border-2 border-transparent hover:border-teal-600">
+            <button id="nav-latido3" class="nav-item p-4 rounded-lg shadow-md text-center font-semibold">
                 <span class="text-2xl block mb-1">🔧</span>
                 Servicios Públicos
             </button>
-            <button id="nav-latido4" class="nav-item p-4 rounded-lg bg-white shadow-md text-center font-semibold text-teal-700 border-2 border-transparent hover:border-teal-600">
+            <button id="nav-latido4" class="nav-item p-4 rounded-lg shadow-md text-center font-semibold">
                 <span class="text-2xl block mb-1">📈</span>
                 Desarrollo Económico
             </button>
@@ -77,14 +97,19 @@
         <main class="bg-white p-6 rounded-xl shadow-lg">
             <div id="main-content" class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                 <div class="order-2 lg:order-1">
-                    <h2 id="content-title" class="text-2xl font-bold text-teal-800 mb-4"></h2>
-                    <p id="content-description" class="text-gray-600 mb-6"></p>
+                    <h2 id="content-title" class="text-2xl font-bold text-content-title mb-4"></h2>
+                    <p id="content-description" class="text-general mb-6"></p>
                     <div id="content-dimensions" class="space-y-4 max-h-[450px] overflow-y-auto pr-4">
                     </div>
                 </div>
                 <div class="order-1 lg:order-2">
-                     <div class="chart-container">
+                    <div class="chart-container">
                         <canvas id="mainChart"></canvas>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button id="downloadChartBtn" class="bg-[#474C55] hover:bg-[#727372] text-[#B2B6AF] font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-300">
+                            Descargar Gráfico
+                        </button>
                     </div>
                 </div>
             </div>
@@ -166,8 +191,17 @@
         const contentDescription = document.getElementById('content-description');
         const contentDimensions = document.getElementById('content-dimensions');
         const navButtons = document.querySelectorAll('.nav-item');
+        const downloadChartBtn = document.getElementById('downloadChartBtn');
+        let currentLatidoId = 'latido1'; // Para saber qué latido se está mostrando y nombrarlo al descargar
+
+        // Colores de la paleta oficial para Chart.js
+        const primaryColor = '#474C55'; // Gris oscuro cálido para la línea del radar
+        const accentColor = '#B2B6AF'; // Gris claro verdoso para el área rellenada
+        const textColor = '#130D0E'; // Negro para el texto de las etiquetas del gráfico
+        const gridColor = '#72737233'; // Gris medio con transparencia para las líneas de la cuadrícula
 
         function updateChart(latidoId) {
+            currentLatidoId = latidoId; // Actualiza el latido actual
             const chartConfig = surveyData[latidoId].chartData;
             if (currentChart) {
                 currentChart.destroy();
@@ -180,12 +214,12 @@
                         label: 'Calificación Promedio',
                         data: chartConfig.data,
                         fill: true,
-                        backgroundColor: 'rgba(13, 148, 136, 0.2)',
-                        borderColor: 'rgb(13, 148, 136)',
-                        pointBackgroundColor: 'rgb(13, 148, 136)',
+                        backgroundColor: accentColor + '40', // Gris claro verdoso con 25% de opacidad
+                        borderColor: primaryColor,
+                        pointBackgroundColor: primaryColor,
                         pointBorderColor: '#fff',
                         pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgb(13, 148, 136)'
+                        pointHoverBorderColor: primaryColor
                     }]
                 },
                 options: {
@@ -193,15 +227,15 @@
                     maintainAspectRatio: false,
                     scales: {
                         r: {
-                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
-                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            angleLines: { color: gridColor },
+                            grid: { color: gridColor },
                             pointLabels: { 
                                 font: { size: 12 },
-                                color: '#4A5568'
-                             },
+                                color: textColor
+                            },
                             ticks: {
-                                backdropColor: 'rgba(255, 255, 255, 0.75)',
-                                color: '#718096',
+                                backdropColor: 'rgba(255, 255, 255, 0.75)', // Fondo blanco para los números de los ticks
+                                color: primaryColor, // Color de los números de los ticks
                                 stepSize: 1,
                             },
                             suggestedMin: 0,
@@ -211,6 +245,9 @@
                     plugins: {
                         legend: {
                             position: 'top',
+                            labels: {
+                                color: primaryColor // Color del texto de la leyenda
+                            }
                         }
                     }
                 }
@@ -224,11 +261,11 @@
             
             contentDimensions.innerHTML = '';
             latidoData.dimensions.forEach(dim => {
-                const questionsList = dim.questions.map(q => `<li class="text-sm text-gray-600 ml-4 list-disc">${q}</li>`).join('');
+                const questionsList = dim.questions.map(q => `<li class="text-sm text-general ml-4 list-disc">${q}</li>`).join('');
                 const dimensionEl = document.createElement('div');
-                dimensionEl.className = 'p-4 border rounded-lg bg-gray-50/50';
+                dimensionEl.className = 'p-4 border rounded-lg bg-gray-50/50'; /* Fondo ligeramente diferente para las dimensiones */
                 dimensionEl.innerHTML = `
-                    <h3 class="font-semibold text-gray-700">${dim.name}</h3>
+                    <h3 class="font-semibold text-content-title">${dim.name}</h3>
                     <ul class="mt-2 space-y-1">${questionsList}</ul>
                 `;
                 contentDimensions.appendChild(dimensionEl);
@@ -236,12 +273,25 @@
         }
         
         function setActiveNav(latidoId) {
-             navButtons.forEach(button => {
+            navButtons.forEach(button => {
                 button.classList.remove('active-nav');
+                // Restablecer estilos predeterminados
+                button.style.backgroundColor = 'white';
+                button.style.color = '#474C55';
                 if (button.id === `nav-${latidoId}`) {
                     button.classList.add('active-nav');
                 }
             });
+        }
+
+        // Función para descargar el gráfico
+        function downloadChart() {
+            if (currentChart) {
+                const link = document.createElement('a');
+                link.download = `grafico_${currentLatidoId}.png`;
+                link.href = currentChart.toBase64Image();
+                link.click();
+            }
         }
 
         function displayLatido(latidoId) {
@@ -254,6 +304,7 @@
         document.getElementById('nav-latido2').addEventListener('click', () => displayLatido('latido2'));
         document.getElementById('nav-latido3').addEventListener('click', () => displayLatido('latido3'));
         document.getElementById('nav-latido4').addEventListener('click', () => displayLatido('latido4'));
+        downloadChartBtn.addEventListener('click', downloadChart); // Asignar el evento al botón
 
         window.addEventListener('load', () => {
             displayLatido('latido1');
